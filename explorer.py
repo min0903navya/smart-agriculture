@@ -10,11 +10,11 @@ st.set_page_config(
 # IMAGE PATHS
 # --------------------------------------------------
 
-IMG1 = r"D:\NAVYA S\1.CLASS 12\science project\flowchart\1.jpg"
-IMG2 = r"D:\NAVYA S\1.CLASS 12\science project\flowchart\2.jpg"
-IMG3 = r"D:\NAVYA S\1.CLASS 12\science project\flowchart\3.jpg"
-IMG4 = r"D:\NAVYA S\1.CLASS 12\science project\flowchart\4.jpg"
-IMG5 = r"D:\NAVYA S\1.CLASS 12\science project\flowchart\5.jpg"
+IMG1 = "1.jpg"
+IMG2 = "2.jpg"
+IMG3 = "3.jpg"
+IMG4 = "4.jpg"
+IMG5 = "5.jpg"
 
 
 # --------------------------------------------------
