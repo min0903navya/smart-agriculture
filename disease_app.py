@@ -1,420 +1,640 @@
-
-
 import streamlit as st
 import streamlit.components.v1 as components
 import base64
 
+# ============================================================
+# PAGE SETTINGS
+# ============================================================
+
 st.set_page_config(
     page_title="AI Plant Disease Detection",
-    page_icon="🌱",
+    page_icon="🌿",
     layout="centered"
 )
 
-# ---------- PAGE TITLE ----------
+# ============================================================
+# TITLE
+# ============================================================
 
-st.title("🌱 AI Plant Disease Detection")
+st.title("🌿 AI Plant Disease Detection")
 
-st.markdown(
-    """
-    <p style="color:#F5E6D3; font-size:18px;">
-        Upload a leaf image and the trained AI model will
-        predict the most likely plant condition.
-    </p>
-    """,
-    unsafe_allow_html=True
+st.write(
+    "Upload a clear image of a rose or brinjal leaf. "
+    "Our AI model will analyse the image and identify the most likely condition."
 )
 
-st.divider()
+# ============================================================
+# SUPPORTED PLANTS
+# ============================================================
 
-# ---------- IMAGE UPLOAD ----------
+st.markdown("### 🌱 Supported Plant Categories")
+
+st.write("🌹 Rose")
+st.write("🍆 Brinjal")
+
+st.markdown("### 🤖 AI Model Classes")
+
+st.write("• Rose Healthy")
+st.write("• Rose Powdery Mildew")
+st.write("• Rose Spider Mite Damage")
+st.write("• Brinjal Healthy")
+st.write("• Brinjal Leaf Blight")
+
+# ============================================================
+# IMAGE UPLOAD
+# ============================================================
 
 uploaded_file = st.file_uploader(
     "📷 Upload a leaf image",
     type=["jpg", "jpeg", "png"]
 )
 
-# ---------- AI ANALYSIS ----------
+# ============================================================
+# AI PREDICTION
+# ============================================================
 
 if uploaded_file is not None:
 
+    # Display uploaded image
+    st.image(
+        uploaded_file,
+        caption="Uploaded Leaf Image",
+        use_container_width=True
+    )
+
+    # Convert image to Base64
     image_bytes = uploaded_file.getvalue()
     image_base64 = base64.b64encode(image_bytes).decode()
 
+    # ========================================================
+    # JAVASCRIPT AI COMPONENT
+    # ========================================================
+
     html_code = f"""
-<!DOCTYPE html>
-<html>
-
-<head>
-
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
-
-<style>
-
-body {{
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background: transparent;
-    color: #F5E6D3;
-}}
+    <!DOCTYPE html>
+    <html>
 
-img {{
-    max-width: 100%;
-    max-height: 300px;
-    border-radius: 12px;
-    margin: 10px;
-}}
+    <head>
 
-#result {{
-    margin-top: 20px;
-    text-align: left;
-    color: #F5E6D3;
-}}
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 
-.prediction {{
-    text-align: center;
-    font-size: 23px;
-    font-weight: bold;
-    color: #F5E6D3;
-}}
+        <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
-.confidence {{
-    text-align: center;
-    font-size: 18px;
-    color: #F5E6D3;
-}}
+        <style>
 
-.confidence b {{
-    color: #F5E6D3;
-}}
+            body {{
+                background: transparent;
+                color: #F5E6D3;
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 10px;
+            }}
 
-.box {{
-    margin-top: 15px;
-    padding: 15px;
-    border-radius: 12px;
-    background: rgba(245, 230, 211, 0.10);
-    color: #F5E6D3;
-}}
+            .result {{
+                margin-top: 20px;
+                padding: 20px;
+                border-radius: 12px;
+                background: rgba(255,255,255,0.08);
+            }}
 
-.box p {{
-    color: #F5E6D3;
-    line-height: 1.5;
-}}
+            .prediction {{
+                font-size: 28px;
+                font-weight: bold;
+                margin-bottom: 10px;
+            }}
 
-.title {{
-    font-weight: bold;
-    font-size: 18px;
-    color: #F5E6D3;
-}}
+            .confidence {{
+                font-size: 20px;
+                margin-bottom: 20px;
+            }}
 
-.warning {{
-    text-align: center;
-    font-size: 20px;
-    font-weight: bold;
-    color: #F5E6D3;
-}}
+            .section {{
+                margin-top: 20px;
+            }}
 
-ul {{
-    color: #F5E6D3;
-    line-height: 1.7;
-}}
+            .section-title {{
+                font-size: 21px;
+                font-weight: bold;
+                margin-bottom: 8px;
+            }}
 
-li {{
-    color: #F5E6D3;
-}}
+            .text {{
+                font-size: 17px;
+                line-height: 1.5;
+            }}
 
-</style>
+            .loading {{
+                font-size: 20px;
+            }}
 
-</head>
+        </style>
 
-<body>
+    </head>
 
-<img
-    id="leafImage"
-    src="data:image/jpeg;base64,{image_base64}"
->
+    <body>
 
-<div id="result">
+        <div id="status" class="loading">
+            🔄 Loading AI model...
+        </div>
 
-    <div class="prediction">
-        🤖 Analysing leaf...
-    </div>
+        <div id="result"></div>
 
-</div>
+        <script>
 
-<script>
+            const MODEL_URL =
+                "https://teachablemachine.withgoogle.com/models/_uozHQYQX/";
 
-const MODEL_URL =
-    "https://teachablemachine.withgoogle.com/models/_uozHQYQX/";
+            const imageBase64 = "{image_base64}";
 
-async function predict() {{
+            async function runPrediction() {{
 
-    try {{
+                try {{
 
-        const modelURL =
-            MODEL_URL + "model.json";
+                    // ------------------------------------------------
+                    // LOAD MODEL
+                    // ------------------------------------------------
 
-        const metadataURL =
-            MODEL_URL + "metadata.json";
+                    const modelURL = MODEL_URL + "model.json";
+                    const metadataURL = MODEL_URL + "metadata.json";
 
-        const model = await tmImage.load(
-            modelURL,
-            metadataURL
-        );
+                    const model = await tmImage.load(
+                        modelURL,
+                        metadataURL
+                    );
 
-        const image =
-            document.getElementById("leafImage");
+                    document.getElementById("status").innerHTML =
+                        "🔍 Analysing leaf image...";
 
-        const predictions =
-            await model.predict(image);
+                    // ------------------------------------------------
+                    // CREATE IMAGE
+                    // ------------------------------------------------
 
-        predictions.sort(
-            (a, b) =>
-            b.probability - a.probability
-        );
+                    const image = new Image();
 
-        const best = predictions[0];
+                    image.onload = async function() {{
 
-        const confidence =
-            (best.probability * 100).toFixed(2);
+                        // ------------------------------------------------
+                        // PREDICT
+                        // ------------------------------------------------
 
-        // ---------- 70% CONFIDENCE THRESHOLD ----------
+                        const prediction =
+                            await model.predict(image);
 
-        if (best.probability < 0.70) {{
+                        // ------------------------------------------------
+                        // FIND HIGHEST CONFIDENCE
+                        // ------------------------------------------------
 
-            document.getElementById("result").innerHTML =
+                        let highestPrediction = prediction[0];
 
-                "<div class='warning'>" +
-                "⚠️ Unable to confidently identify" +
-                "</div>" +
+                        for (
+                            let i = 1;
+                            i < prediction.length;
+                            i++
+                        ) {{
 
-                "<p class='confidence'>" +
-                "Model confidence: <b>" +
-                confidence +
-                "%</b>" +
-                "</p>" +
+                            if (
+                                prediction[i].probability >
+                                highestPrediction.probability
+                            ) {{
 
-                "<div class='box'>" +
+                                highestPrediction =
+                                    prediction[i];
 
-                "<div class='title'>📷 Try Again</div>" +
+                            }}
 
-                "<p>" +
-                "Please upload a clear image of a " +
-                "<b>rose or brinjal leaf</b>." +
-                "</p>" +
+                        }}
 
-                "</div>";
+                        const label =
+                            highestPrediction.className;
 
-            return;
-        }}
+                        const confidence =
+                            highestPrediction.probability * 100;
 
-        const label =
-            best.className.toLowerCase().trim();
+                        // ------------------------------------------------
+                        // 70% CONFIDENCE THRESHOLD
+                        // ------------------------------------------------
 
-        let displayName = best.className;
-        let cause = "";
-        let action = "";
+                        const threshold = 70;
 
-        // ---------- ROSE HEALTHY ----------
+                        let resultHTML = "";
 
-        if (label.includes("rose healthy")) {{
+                        document.getElementById("status").innerHTML = "";
 
-            displayName =
-                "Rose — Healthy";
+                        if (confidence >= threshold) {{
 
-            cause =
-                "No disease condition was identified by the trained model.";
+                            // ==================================================
+                            // ROSE HEALTHY
+                            // ==================================================
 
-            action =
-                "Continue normal plant care and monitor the leaves regularly.";
+                            if (label.toLowerCase().includes("rose healthy")) {{
 
-        }}
+                                resultHTML = `
+                                    <div class="result">
 
-        // ---------- ROSE MILDEW ----------
+                                        <div class="prediction">
+                                            🌹 Rose — Healthy
+                                        </div>
 
-        else if (label.includes("mildew")) {{
+                                        <div class="confidence">
+                                            Confidence: ${{confidence.toFixed(2)}}%
+                                        </div>
 
-            displayName =
-                "Rose — Powdery Mildew";
+                                        <div class="section">
 
-            cause =
-                "<ul>" +
-                "<li>High humidity at night followed by warm, dry days</li>" +
-                "<li>Low light or shaded locations</li>" +
-                "<li>Poor air circulation or overcrowding</li>" +
-                "<li>Leaf moisture remaining overnight</li>" +
-                "</ul>";
+                                            <div class="section-title">
+                                                🌱 Possible Condition
+                                            </div>
 
-            action =
-                "<ul>" +
-                "<li>Prune branches to improve airflow</li>" +
-                "<li>Provide adequate sunlight where practical</li>" +
-                "<li>Prefer early-morning watering</li>" +
-                "<li>Water the roots directly rather than keeping leaves wet</li>" +
-                "</ul>";
+                                            <div class="text">
+                                                The leaf appears healthy based on
+                                                the visual patterns learned by
+                                                the AI model.
+                                            </div>
 
-        }}
+                                        </div>
 
-        // ---------- ROSE SPIDER MITES ----------
+                                        <div class="section">
 
-        else if (label.includes("spider")) {{
+                                            <div class="section-title">
+                                                💡 What to do
+                                            </div>
 
-            displayName =
-                "Rose — Spider Mite Damage";
+                                            <div class="text">
+                                                Continue providing suitable
+                                                sunlight, water, air circulation
+                                                and regular plant care.
+                                            </div>
 
-            cause =
-                "<ul>" +
-                "<li>High temperatures</li>" +
-                "<li>Low humidity and very dry air</li>" +
-                "<li>Dusty environments</li>" +
-                "<li>Drought stress or insufficient watering</li>" +
-                "</ul>";
+                                        </div>
 
-            action =
-                "<ul>" +
-                "<li>Maintain adequate soil moisture</li>" +
-                "<li>Reduce plant stress during hot, dry conditions</li>" +
-                "<li>Inspect the undersides of leaves regularly</li>" +
-                "<li>Use appropriate plant-safe pest-control methods if needed</li>" +
-                "<li>Beneficial predatory insects can also help control mite populations</li>" +
-                "</ul>";
+                                    </div>
+                                `;
 
-        }}
+                            }}
 
-        // ---------- BRINJAL HEALTHY ----------
+                            // ==================================================
+                            // ROSE POWDERY MILDEW
+                            // ==================================================
 
-        else if (label.includes("brinjal healthy")) {{
+                            else if (
+                                label.toLowerCase().includes("mildew")
+                            ) {{
 
-            displayName =
-                "Brinjal — Healthy";
+                                resultHTML = `
+                                    <div class="result">
 
-            cause =
-                "No disease condition was identified by the trained model.";
+                                        <div class="prediction">
+                                            🌹 Rose — Powdery Mildew
+                                        </div>
 
-            action =
-                "Continue normal plant care and monitor the leaves regularly.";
+                                        <div class="confidence">
+                                            Confidence: ${{confidence.toFixed(2)}}%
+                                        </div>
 
-        }}
+                                        <div class="section">
 
-        // ---------- BRINJAL LEAF BLIGHT ----------
+                                            <div class="section-title">
+                                                ⚠️ Possible Environmental Causes
+                                            </div>
 
-        else if (label.includes("blite")) {{
+                                            <div class="text">
+                                                • High humidity at night followed
+                                                by warm, dry days.<br>
 
-            displayName =
-                "Brinjal — Leaf Blight";
+                                                • Low light or shaded locations.<br>
 
-            cause =
-                "<ul>" +
-                "<li>Warm temperatures combined with heavy rainfall</li>" +
-                "<li>High humidity</li>" +
-                "<li>Frequent overhead watering</li>" +
-                "<li>Water or soil splashing onto lower leaves</li>" +
-                "</ul>";
+                                                • Poor air circulation or
+                                                overcrowding.<br>
 
-            action =
-                "<ul>" +
-                "<li>Prefer drip or root-level irrigation</li>" +
-                "<li>Use soil mulch to reduce water and mud splashing</li>" +
-                "<li>Remove lower leaves that touch the ground</li>" +
-                "<li>Clear dead plant debris around the plant</li>" +
-                "</ul>";
+                                                • Leaf moisture remaining
+                                                overnight.
+                                            </div>
 
-        }}
+                                        </div>
 
-        // ---------- FALLBACK ----------
+                                        <div class="section">
 
-        else {{
+                                            <div class="section-title">
+                                                🛠️ What to do
+                                            </div>
 
-            displayName =
-                best.className;
+                                            <div class="text">
+                                                • Prune branches to improve
+                                                airflow.<br>
 
-            cause =
-                "The model identified a condition without a specific advisory in this prototype.";
+                                                • Move the plant to an area with
+                                                around 6 or more hours of direct
+                                                sunlight where practical.<br>
 
-            action =
-                "Monitor the plant and compare symptoms with reliable plant-disease guidance.";
+                                                • Prefer early-morning watering.<br>
 
-        }}
+                                                • Water the roots directly and
+                                                try to keep the leaves dry.
+                                            </div>
 
-        document.getElementById("result").innerHTML =
+                                        </div>
 
-            "<div class='prediction'>" +
-            "🤖 AI Prediction" +
-            "</div>" +
+                                    </div>
+                                `;
 
-            "<p class='prediction'>" +
-            displayName +
-            "</p>" +
+                            }}
 
-            "<p class='confidence'>" +
-            "Confidence: <b>" +
-            confidence +
-            "%</b>" +
-            "</p>" +
+                            // ==================================================
+                            // ROSE SPIDER MITE
+                            // ==================================================
 
-            "<div class='box'>" +
+                            else if (
+                                label.toLowerCase().includes("spider")
+                            ) {{
 
-            "<div class='title'>" +
-            "🔍 Possible Environmental Causes" +
-            "</div>" +
+                                resultHTML = `
+                                    <div class="result">
 
-            cause +
+                                        <div class="prediction">
+                                            🌹 Rose — Spider Mite Damage
+                                        </div>
 
-            "</div>" +
+                                        <div class="confidence">
+                                            Confidence: ${{confidence.toFixed(2)}}%
+                                        </div>
 
-            "<div class='box'>" +
+                                        <div class="section">
 
-            "<div class='title'>" +
-            "💡 What To Do" +
-            "</div>" +
+                                            <div class="section-title">
+                                                ⚠️ Possible Environmental Causes
+                                            </div>
 
-            action +
+                                            <div class="text">
+                                                • High temperatures.<br>
 
-            "</div>";
+                                                • Low humidity and very dry air.<br>
 
-    }}
+                                                • Dusty environments.<br>
 
-    catch (error) {{
+                                                • Drought-stressed or
+                                                underwatered plants.
+                                            </div>
 
-        document.getElementById("result").innerHTML =
+                                        </div>
 
-            "<div class='warning'>" +
-            "❌ Unable to analyse the image" +
-            "</div>" +
+                                        <div class="section">
 
-            "<p class='confidence'>" +
-            "Please check your internet connection and try again." +
-            "</p>";
+                                            <div class="section-title">
+                                                🛠️ What to do
+                                            </div>
 
-        console.error(error);
+                                            <div class="text">
+                                                • Overhead water misting can
+                                                increase humidity and help wash
+                                                away mites.<br>
 
-    }}
+                                                • Frequent misting of leaf
+                                                undersides can also help.<br>
 
-}}
+                                                • Regular soil watering helps
+                                                prevent plant stress.<br>
 
-predict();
+                                                • Predatory insects such as
+                                                ladybugs can help control mites.
+                                            </div>
 
-</script>
+                                        </div>
 
-</body>
-</html>
-"""
+                                    </div>
+                                `;
+
+                            }}
+
+                            // ==================================================
+                            // BRINJAL HEALTHY
+                            // ==================================================
+
+                            else if (
+                                label.toLowerCase().includes("brinjal healthy")
+                            ) {{
+
+                                resultHTML = `
+                                    <div class="result">
+
+                                        <div class="prediction">
+                                            🍆 Brinjal — Healthy
+                                        </div>
+
+                                        <div class="confidence">
+                                            Confidence: ${{confidence.toFixed(2)}}%
+                                        </div>
+
+                                        <div class="section">
+
+                                            <div class="section-title">
+                                                🌱 Possible Condition
+                                            </div>
+
+                                            <div class="text">
+                                                The leaf appears healthy based
+                                                on the visual patterns learned
+                                                by the AI model.
+                                            </div>
+
+                                        </div>
+
+                                        <div class="section">
+
+                                            <div class="section-title">
+                                                💡 What to do
+                                            </div>
+
+                                            <div class="text">
+                                                Continue regular watering,
+                                                suitable sunlight, good airflow
+                                                and normal plant care.
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                `;
+
+                            }}
+
+                            // ==================================================
+                            // BRINJAL LEAF BLIGHT
+                            // ==================================================
+
+                            else if (
+                                label.toLowerCase().includes("brinjal") &&
+                                (
+                                    label.toLowerCase().includes("blite") ||
+                                    label.toLowerCase().includes("blight")
+                                )
+                            ) {{
+
+                                resultHTML = `
+                                    <div class="result">
+
+                                        <div class="prediction">
+                                            🍆 Brinjal — Leaf Blight
+                                        </div>
+
+                                        <div class="confidence">
+                                            Confidence: ${{confidence.toFixed(2)}}%
+                                        </div>
+
+                                        <div class="section">
+
+                                            <div class="section-title">
+                                                ⚠️ Possible Environmental Causes
+                                            </div>
+
+                                            <div class="text">
+                                                • Warm temperatures combined
+                                                with heavy rainfall.<br>
+
+                                                • High humidity.<br>
+
+                                                • Frequent overhead watering.<br>
+
+                                                • Water or soil splashing onto
+                                                lower leaves.
+                                            </div>
+
+                                        </div>
+
+                                        <div class="section">
+
+                                            <div class="section-title">
+                                                🛠️ What to do
+                                            </div>
+
+                                            <div class="text">
+                                                • Use drip irrigation instead
+                                                of overhead sprinklers.<br>
+
+                                                • Apply soil mulch to reduce
+                                                soil splashing.<br>
+
+                                                • Prune lower leaves touching
+                                                the ground.<br>
+
+                                                • Clear dead plant debris from
+                                                around the plant.
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                `;
+
+                            }}
+
+                            // ==================================================
+                            // UNKNOWN CLASS
+                            // ==================================================
+
+                            else {{
+
+                                resultHTML = `
+                                    <div class="result">
+
+                                        <div class="prediction">
+                                            🌿 ${{label}}
+                                        </div>
+
+                                        <div class="confidence">
+                                            Confidence: ${{confidence.toFixed(2)}}%
+                                        </div>
+
+                                    </div>
+                                `;
+
+                            }}
+
+                        }}
+
+                        // ======================================================
+                        // BELOW 70%
+                        // ======================================================
+
+                        else {{
+
+                            resultHTML = `
+                                <div class="result">
+
+                                    <div class="prediction">
+                                        ⚠️ Unable to confidently identify
+                                    </div>
+
+                                    <div class="confidence">
+                                        Highest confidence:
+                                        ${{confidence.toFixed(2)}}%
+                                    </div>
+
+                                    <div class="section">
+
+                                        <div class="section-title">
+                                            📷 Please try again
+                                        </div>
+
+                                        <div class="text">
+                                            Upload a clear image of a rose or
+                                            brinjal leaf with good lighting and
+                                            the leaf clearly visible.
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            `;
+
+                        }}
+
+                        document.getElementById("result").innerHTML =
+                            resultHTML;
+
+                    }};
+
+                    image.src =
+                        "data:image/jpeg;base64," + imageBase64;
+
+                }}
+
+                catch (error) {{
+
+                    document.getElementById("status").innerHTML =
+                        "❌ Error loading or running the AI model.";
+
+                    document.getElementById("result").innerHTML = `
+                        <div class="result">
+
+                            <div class="text">
+                                Please check your internet connection
+                                and try again.
+                            </div>
+
+                        </div>
+                    `;
+
+                    console.error(error);
+
+                }}
+
+            }}
+
+            runPrediction();
+
+        </script>
+
+    </body>
+
+    </html>
+    """
+
+    # ========================================================
+    # DISPLAY AI COMPONENT
+    # ========================================================
 
     components.html(
-       html_code,
-       height=800,
-       scrolling=True
+        html_code,
+        height=900,
+        scrolling=True
     )
-
-st.divider()
-
-st.markdown(
-    """
-    <p style="color:#F5E6D3; text-align:center;">
-        AI model trained using Google Teachable Machine.
-    </p>
-    """,
-    unsafe_allow_html=True
-)
-
