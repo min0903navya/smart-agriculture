@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+from datetime import datetime
 
 
 # ============================================================
@@ -8,14 +9,15 @@ import requests
 # ============================================================
 
 st.set_page_config(
-    page_title="Smart Agriculture",
+    page_title="AI + IoT Precision Agriculture",
     page_icon="🌱",
-    layout="centered"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 
 # ============================================================
-# IMAGE PATHS
+# GITHUB FLOWCHART IMAGES
 # ============================================================
 
 IMG1 = "https://raw.githubusercontent.com/min0903navya/smart-agriculture/main/1.jpg"
@@ -26,612 +28,587 @@ IMG5 = "https://raw.githubusercontent.com/min0903navya/smart-agriculture/main/5.
 
 
 # ============================================================
-# GOOGLE APPS SCRIPT URL
+# GOOGLE SHEETS WEB APP
 # ============================================================
 
-GOOGLE_SCRIPT_URL = (
+GOOGLE_SHEET_URL = (
     "https://script.google.com/macros/s/"
-    "AKfycbxahGoaxdj2J_3M2lyy_UPOdfJTaBNXsF0NW8FReMvuOR-mQg23flpPiMXKwgqIAjWiJw"
-    "/exec"
+    "AKfycbwxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/"
+    "exec"
 )
 
 
 # ============================================================
-# PAGE CONTROL
+# CUSTOM CSS
 # ============================================================
 
-if "page" not in st.session_state:
-    st.session_state.page = "home"
+st.markdown(
+    """
+    <style>
 
+    .main {
+        padding-top: 1rem;
+    }
 
-def back_button():
-    if st.button("⬅️ Back to Menu"):
-        st.session_state.page = "home"
-        st.rerun()
+    .hero {
+        padding: 35px 25px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+        text-align: center;
+        margin-bottom: 30px;
+        border: 1px solid #c8e6c9;
+    }
+
+    .hero-title {
+        font-size: 42px;
+        font-weight: 800;
+        color: #1b5e20;
+        margin-bottom: 8px;
+    }
+
+    .hero-subtitle {
+        font-size: 21px;
+        color: #33691e;
+    }
+
+    .section-card {
+        padding: 22px;
+        border-radius: 15px;
+        border: 1px solid #d7e8d5;
+        background-color: #fafdf9;
+        margin: 12px 0;
+    }
+
+    .metric-card {
+        padding: 18px;
+        border-radius: 14px;
+        background-color: #f5f9f4;
+        border: 1px solid #dce8da;
+        text-align: center;
+        min-height: 120px;
+    }
+
+    .metric-number {
+        font-size: 30px;
+        font-weight: 800;
+        color: #2e7d32;
+    }
+
+    .metric-label {
+        font-size: 15px;
+        color: #555555;
+    }
+
+    .flow-step {
+        padding: 15px;
+        border-radius: 12px;
+        background-color: #f6faf5;
+        border-left: 5px solid #66bb6a;
+        margin-bottom: 10px;
+    }
+
+    .judge-box {
+        padding: 20px;
+        border-radius: 15px;
+        background-color: #f1f8e9;
+        border: 1px solid #c5e1a5;
+        margin: 15px 0;
+    }
+
+    .future-box {
+        padding: 20px;
+        border-radius: 15px;
+        background-color: #f7f7f7;
+        border: 1px solid #dddddd;
+        margin: 10px 0;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # ============================================================
-# GOOGLE SHEET DATA FUNCTIONS
+# SIDEBAR NAVIGATION
 # ============================================================
 
-def get_sensor_data():
+st.sidebar.title("🌱 Project Explorer")
 
-    try:
-        response = requests.get(
-            GOOGLE_SCRIPT_URL + "?read=sensor",
-            timeout=10
-        )
+st.sidebar.markdown(
+    """
+    **AI + IoT Based Precision Agriculture**
 
-        response.raise_for_status()
+    Use this menu while explaining the project to the judges.
+    """
+)
 
-        data = response.json()
+page = st.sidebar.radio(
+    "Navigate to:",
+    [
+        "🌾 The Problem",
+        "💡 How We Solve It",
+        "🌡️ Environmental Monitoring",
+        "🚰 Smart Irrigation",
+        "🍃 AI Plant Disease Detection",
+        "🏗️ Our Prototype",
+        "🔮 Future Vision"
+    ]
+)
 
-        if not isinstance(data, list):
-            st.error("Google Sheet returned an unexpected response.")
-            return pd.DataFrame()
+st.sidebar.markdown("---")
 
-        df = pd.DataFrame(data)
+st.sidebar.info(
+    """
+    **Main technologies**
 
-        if df.empty:
-            return df
-
-        # Remove completely empty rows
-        df = df.dropna(how="all")
-
-        return df
-
-    except Exception as e:
-        st.error(f"Could not load Sensor Data: {e}")
-        return pd.DataFrame()
-
-
-def get_irrigation_data():
-
-    try:
-        response = requests.get(
-            GOOGLE_SCRIPT_URL + "?read=irrigation",
-            timeout=10
-        )
-
-        response.raise_for_status()
-
-        data = response.json()
-
-        if not isinstance(data, list):
-            st.error("Google Sheet returned an unexpected response.")
-            return pd.DataFrame()
-
-        df = pd.DataFrame(data)
-
-        if df.empty:
-            return df
-
-        # Remove completely empty rows
-        df = df.dropna(how="all")
-
-        return df
-
-    except Exception as e:
-        st.error(f"Could not load Irrigation Log: {e}")
-        return pd.DataFrame()
+    • Arduino Uno  
+    • DHT11  
+    • LDR  
+    • Soil Moisture Sensor  
+    • Relay + Pump  
+    • Python  
+    • Streamlit  
+    • Teachable Machine  
+    • TensorFlow.js  
+    • Google Sheets
+    """
+)
 
 
 # ============================================================
-# HOME PAGE
+# HELPER FUNCTIONS
 # ============================================================
 
-if st.session_state.page == "home":
-
-    st.title("🌱 Smart Agriculture")
-    st.subheader("AI + IoT Based Precision Agriculture")
-
-    st.write(
-        "A prototype that combines environmental monitoring, "
-        "smart irrigation and AI-based plant disease detection."
+def show_flowchart(image_url, caption):
+    st.image(
+        image_url,
+        caption=caption,
+        use_container_width=True
     )
 
-    st.divider()
 
-    st.subheader("Explore Our Project")
+def section_title(title, subtitle=None):
+    st.title(title)
 
-    # --------------------------------------------------------
-    # ROW 1
-    # --------------------------------------------------------
+    if subtitle:
+        st.markdown(
+            f"<p style='font-size:18px;color:#555;'>{subtitle}</p>",
+            unsafe_allow_html=True
+        )
 
-    col1, col2 = st.columns(2)
 
-    with col1:
-        if st.button("🌾 The Problem", use_container_width=True):
-            st.session_state.page = "problem"
-            st.rerun()
+def get_google_sheet_data(read_type):
+    """
+    Reads data from the Google Apps Script Web App.
 
-    with col2:
-        if st.button("💡 What We Intend To Do", use_container_width=True):
-            st.session_state.page = "idea"
-            st.rerun()
+    The function is deliberately defensive so that the
+    exhibition website does not crash if the sheet is
+    temporarily unavailable.
+    """
 
-    # --------------------------------------------------------
-    # ROW 2
-    # --------------------------------------------------------
+    try:
+        response = requests.get(
+            GOOGLE_SHEET_URL,
+            params={"read": read_type},
+            timeout=10
+        )
 
-    col1, col2 = st.columns(2)
+        if response.status_code != 200:
+            return None
 
-    with col1:
-        if st.button("🍃 Disease Detection", use_container_width=True):
-            st.session_state.page = "disease"
-            st.rerun()
+        data = response.json()
 
-    with col2:
-        if st.button("🌡️ Environmental Analysis", use_container_width=True):
-            st.session_state.page = "environment"
-            st.rerun()
+        if isinstance(data, list):
+            return pd.DataFrame(data)
 
-    # --------------------------------------------------------
-    # ROW 3
-    # --------------------------------------------------------
+        return None
 
-    col1, col2 = st.columns(2)
+    except Exception:
+        return None
 
-    with col1:
-        if st.button("🚰 Smart Irrigation", use_container_width=True):
-            st.session_state.page = "irrigation"
-            st.rerun()
 
-    with col2:
-        if st.button("🧑‍💻 Our Code", use_container_width=True):
-            st.session_state.page = "code"
-            st.rerun()
+def normalise_columns(df):
+    """
+    Makes Google Sheet column names easier to use.
+    """
 
-    # --------------------------------------------------------
-    # ROW 4
-    # --------------------------------------------------------
+    if df is None or df.empty:
+        return df
 
-    col1, col2 = st.columns(2)
+    df = df.copy()
 
-    with col1:
-        if st.button("📊 Recorded Data", use_container_width=True):
-            st.session_state.page = "data"
-            st.rerun()
+    df.columns = [
+        str(column).strip()
+        for column in df.columns
+    ]
 
-    with col2:
-        if st.button("🏗️ Our Prototype", use_container_width=True):
-            st.session_state.page = "prototype"
-            st.rerun()
+    return df
+
+
+# ============================================================
+# HERO
+# ============================================================
+
+st.markdown(
+    """
+    <div class="hero">
+        <div class="hero-title">
+            🌱 AI + IoT Based Precision Agriculture
+        </div>
+
+        <div class="hero-subtitle">
+            Smart Environmental Monitoring • Smart Irrigation • AI Plant Disease Detection
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # ============================================================
 # 1. THE PROBLEM
 # ============================================================
 
-elif st.session_state.page == "problem":
+if page == "🌾 The Problem":
 
-    back_button()
-
-    st.title("🌾 The Problem")
-
-    st.write(
-        "Agriculture depends on many environmental and biological factors. "
-        "Changes in temperature, humidity, soil moisture and light can affect "
-        "crop growth. Plant diseases can also reduce crop productivity."
+    section_title(
+        "🌾 The Problem",
+        "Why do we need technology in agriculture?"
     )
 
-    st.subheader("The main challenges")
+    st.markdown(
+        """
+        Agriculture depends on many factors working together.
 
-    st.markdown("""
-    - 🌡️ Unfavourable environmental conditions
-    - 🍃 Plant diseases
-    - 💧 Improper irrigation
-    - 🌦️ Changing weather conditions
-    - 🔍 Difficulty in identifying problems early
-    """)
+        A plant does not need only water. Its growth is affected by
+        **temperature, humidity, light, soil moisture and soil nutrients**.
 
-    st.subheader("Why this matters")
+        At the same time, farmers have to deal with problems such as:
 
-    st.write(
-        "Farmers need to make decisions about irrigation, plant health, "
-        "weather conditions, nutrients and plant protection."
+        - 💧 Inefficient or excessive irrigation
+        - 🌡️ Changing environmental conditions
+        - 🍃 Plant diseases and visible leaf damage
+        - 🌱 Maintaining suitable conditions for different crops
+        - 📊 Making decisions from changing field conditions
+        """
     )
 
-    st.info(
-        "Our project explores how sensors, automation and AI can support "
-        "better-informed crop-management decisions."
+    st.markdown("---")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.markdown(
+            """
+            <div class="metric-card">
+                <div class="metric-number">💧</div>
+                <div class="metric-label">
+                    Water management
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col2:
+        st.markdown(
+            """
+            <div class="metric-card">
+                <div class="metric-number">🌡️</div>
+                <div class="metric-label">
+                    Environmental changes
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col3:
+        st.markdown(
+            """
+            <div class="metric-card">
+                <div class="metric-number">🍃</div>
+                <div class="metric-label">
+                    Plant health
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col4:
+        st.markdown(
+            """
+            <div class="metric-card">
+                <div class="metric-number">📊</div>
+                <div class="metric-label">
+                    Data-based decisions
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    st.markdown("---")
+
+    st.subheader("Our basic question")
+
+    st.markdown(
+        """
+        **Can we use affordable electronics, software and AI to continuously
+        monitor plant conditions and support better agricultural decisions?**
+        """
     )
 
-
-# ============================================================
-# 2. WHAT WE INTEND TO DO
-# ============================================================
-
-elif st.session_state.page == "idea":
-
-    back_button()
-
-    st.title("💡 What We Intend To Do")
-
-    st.write(
-        "We intend to build a precision agriculture system that can monitor "
-        "plant conditions, automate irrigation and analyse leaf images."
+    st.markdown(
+        """
+        Our project is a prototype that combines **IoT-based environmental
+        monitoring, automated irrigation and AI-based leaf image analysis**
+        into one system.
+        """
     )
 
-    st.image(
+    show_flowchart(
         IMG1,
-        caption="Main System Flow",
-        use_container_width=True
-    )
-
-    st.subheader("Our approach")
-
-    st.markdown("""
-    **🌡️ Monitor**
-
-    Measure temperature, humidity, soil moisture and light.
-
-    **🚰 Manage Water**
-
-    Use soil moisture information to control irrigation.
-
-    **🍃 Analyse Leaves**
-
-    Use AI to classify visible conditions in leaf images.
-    """)
-
-    st.subheader("Goal")
-
-    st.write(
-        "The aim is to use available information about the plant and its "
-        "environment to support better crop management."
+        "Overall concept of our precision agriculture system"
     )
 
 
 # ============================================================
-# 3. DISEASE DETECTION
+# 2. HOW WE SOLVE IT
 # ============================================================
 
-elif st.session_state.page == "disease":
+elif page == "💡 How We Solve It":
 
-    back_button()
-
-    st.title("🍃 AI Disease Detection")
-
-    st.write(
-        "Our AI model analyses a photograph of a plant leaf and predicts "
-        "the category that most closely matches the visual patterns it "
-        "has learned."
+    section_title(
+        "💡 How We Solve It",
+        "Our system has three major technological parts."
     )
 
-    st.image(
-        IMG2,
-        caption="AI Disease Detection Process",
-        use_container_width=True
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown(
+            """
+            <div class="section-card">
+                <h3>🌡️ Environmental Monitoring</h3>
+
+                <p>
+                Sensors continuously measure important environmental
+                conditions around the plant.
+                </p>
+
+                <b>Measures:</b>
+
+                <ul>
+                    <li>Temperature</li>
+                    <li>Humidity</li>
+                    <li>Light intensity</li>
+                    <li>Soil moisture</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col2:
+        st.markdown(
+            """
+            <div class="section-card">
+                <h3>🚰 Smart Irrigation</h3>
+
+                <p>
+                The system checks the soil condition and operates the
+                pump only when watering is required.
+                </p>
+
+                <b>Technology:</b>
+
+                <ul>
+                    <li>Arduino</li>
+                    <li>Relay</li>
+                    <li>Water pump</li>
+                    <li>Soil moisture sensor</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col3:
+        st.markdown(
+            """
+            <div class="section-card">
+                <h3>🍃 AI Disease Detection</h3>
+
+                <p>
+                A trained image-classification model analyses a leaf
+                image and predicts the visible class.
+                </p>
+
+                <b>Technology:</b>
+
+                <ul>
+                    <li>Teachable Machine</li>
+                    <li>TensorFlow.js</li>
+                    <li>JavaScript</li>
+                    <li>Streamlit interface</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    st.markdown("---")
+
+    st.subheader("🔄 Overall system flow")
+
+    show_flowchart(
+        IMG1,
+        "Overall project workflow"
     )
 
-    st.subheader("🤖 AI Classification")
+    st.markdown(
+        """
+        ### The basic idea
 
-    st.write(
-        "The model was trained using Google Teachable Machine with five "
-        "leaf-image classes."
+        **Sensors → Arduino → Computer → Data analysis → Decision → Action**
+
+        At the same time:
+
+        **Leaf image → AI model → Predicted visible condition**
+        """
     )
 
-    st.markdown("""
-    ### 🌹 Rose
-
-    • Rose Healthy  
-    • Rose Powdery Mildew  
-    • Rose Spider Mite Damage
-
-    ### 🍆 Brinjal
-
-    • Brinjal Healthy  
-    • Brinjal Leaf Blight
-    """)
-
-    st.divider()
-
-    st.subheader("🧪 Our Testing")
-
-    st.write(
-        "We tested one demonstration image for each of the five classes "
-        "and recorded the confidence shown by the model."
-    )
-
-    testing_data = pd.DataFrame({
-        "Plant": [
-            "Rose",
-            "Rose",
-            "Rose",
-            "Brinjal",
-            "Brinjal"
-        ],
-        "Tested Condition": [
-            "Healthy",
-            "Powdery Mildew",
-            "Spider Mite Damage",
-            "Healthy",
-            "Leaf Blight"
-        ],
-        "Confidence": [
-            "93%",
-            "93%",
-            "95%",
-            "98%",
-            "97%"
-        ]
-    })
-
-    st.dataframe(
-        testing_data,
-        use_container_width=True,
-        hide_index=True
-    )
-
-    st.write(
-        "The model's confidence was above 90% for each of these "
-        "demonstration tests."
-    )
-
-    st.subheader("70% Confidence Threshold")
-
-    st.write(
-        "For our application, predictions at or above 70% are displayed "
-        "with the corresponding possible causes and suggested actions. "
-        "Below 70%, the system asks for a clearer leaf image."
+    st.markdown(
+        """
+        <div class="judge-box">
+        <b>Important:</b> Our environmental analysis is
+        <b>rule-based</b>. The genuine AI component of our current
+        prototype is the plant leaf image-classification system.
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
 
 # ============================================================
-# 4. ENVIRONMENTAL ANALYSIS
+# 3. ENVIRONMENTAL MONITORING
 # ============================================================
 
-elif st.session_state.page == "environment":
+elif page == "🌡️ Environmental Monitoring":
 
-    back_button()
-
-    st.title("🌡️ Environmental Analysis")
-
-    st.write(
-        "Our prototype focuses on four measurable environmental factors "
-        "that influence plant growth."
+    section_title(
+        "🌡️ Environmental Monitoring",
+        "Measuring the conditions that affect plant growth."
     )
 
-    st.markdown("""
-    ### 🌡️ Temperature
+    st.markdown(
+        """
+        Our Arduino receives readings from four environmental measurements:
 
-    Affects plant growth and suitability for different crops.
+        | Sensor | Measurement | Arduino connection |
+        |---|---|---|
+        | DHT11 | Temperature + Humidity | Digital D2 |
+        | LDR | Light intensity | Analog A0 |
+        | Soil moisture sensor | Soil moisture | Analog A1 |
 
-    ### 💧 Humidity
+        The Arduino converts the analogue sensor signals into digital
+        values and sends the readings to the computer through USB serial
+        communication.
+        """
+    )
 
-    Indicates the moisture present in the surrounding air.
+    st.markdown("---")
 
-    ### 🌱 Soil Moisture
+    st.subheader("🔧 Environmental monitoring flow")
 
-    Indicates whether the soil is sufficiently wet or becoming dry.
-
-    ### ☀️ Light
-
-    Indicates the amount of light available to the plant.
-    """)
-
-    st.divider()
-
-    st.subheader("Sensors Used")
-
-    st.markdown("""
-    **DHT11 → Temperature + Humidity**
-
-    **Soil Moisture Sensor → Soil Moisture**
-
-    **LDR → Light**
-
-    **Arduino Uno → Collects sensor readings**
-
-    **Python + Streamlit → Displays and analyses the readings**
-    """)
-
-    st.image(
+    show_flowchart(
         IMG3,
-        caption="Environmental Monitoring and Analysis",
-        use_container_width=True
+        "Environmental monitoring workflow"
     )
 
-    st.subheader("Other factors")
+    st.markdown("---")
 
-    st.write(
-        "Plant growth is also affected by soil pH, nutrients such as NPK, "
-        "water quality, pests, diseases, crop variety and growth stage."
+    st.subheader("🧑‍💻 How our code works")
+
+    st.markdown(
+        """
+        **1. Arduino reads the sensors**
+
+        The Arduino program reads temperature, humidity, light and
+        soil-moisture values.
+
+        **2. Serial communication**
+
+        The Arduino sends the readings to the computer through USB.
+
+        **3. Python receives the data**
+
+        Python reads the serial data coming from the Arduino.
+
+        **4. The application analyses the readings**
+
+        The readings are compared with reference requirements for
+        the selected plant.
+
+        **5. Streamlit displays the result**
+
+        Instead of showing only raw numbers, the application gives
+        understandable information about the current condition.
+        """
     )
 
-    st.write(
-        "NPK measurement was considered for the prototype but was not "
-        "included because of the additional equipment required."
+    st.markdown("---")
+
+    st.subheader("🌱 Crop suitability analysis")
+
+    crop = st.selectbox(
+        "Select a crop to understand the analysis:",
+        ["Fenugreek", "Money Plant"]
     )
 
+    if crop == "Fenugreek":
 
-# ============================================================
-# 5. SMART IRRIGATION
-# ============================================================
+        st.markdown(
+            """
+            **Reference environmental range used in our prototype**
 
-elif st.session_state.page == "irrigation":
+            - Temperature: **10–24 °C**
+            - Humidity: **40–55 %**
+            - Light: **700–1000**
+            - Soil moisture: **371–649 ADC = reference suitable range**
 
-    back_button()
+            The soil thresholds are prototype reference values and would
+            require field calibration for real agricultural deployment.
+            """
+        )
 
-    st.title("🚰 Smart Irrigation")
+    else:
 
-    st.write(
-        "The smart irrigation system uses soil moisture information to "
-        "determine whether the selected crop may need water."
-    )
+        st.markdown(
+            """
+            **Reference environmental range used in our prototype**
 
-    st.image(
-        IMG4,
-        caption="Smart Irrigation Decision Process",
-        use_container_width=True
-    )
+            - Temperature: **20–29 °C**
+            - Humidity: **50–80 %**
+            - Light: **400–700**
+            - Soil moisture: **651–849 ADC = reference suitable range**
 
-    st.subheader("How it works")
+            The soil thresholds are prototype reference values and would
+            require field calibration for real agricultural deployment.
+            """
+        )
 
-    st.markdown("""
-    **Soil Moisture Sensor**
+    st.markdown("---")
 
-    ↓
+    st.subheader("📊 Recorded Environmental Data")
 
-    **Arduino Uno**
+    sensor_df = get_google_sheet_data("sensor")
+    sensor_df = normalise_columns(sensor_df)
 
-    ↓
-
-    **Compare with Crop Requirement**
-
-    ↓
-
-    **Relay**
-
-    ↓
-
-    **DC Water Pump**
-    """)
-
-    st.subheader("🌱 Crop-specific soil conditions")
-
-    st.markdown("""
-    **Fenugreek**
-
-    Target moisture: approximately 50–85%
-
-    **Money Plant**
-
-    Target moisture: approximately 25–50%
-    """)
-
-    st.subheader("⚙️ Automatic irrigation")
-
-    st.write(
-        "When the soil is detected as too dry, the Arduino activates "
-        "the relay and the small DC pump runs for a short watering period. "
-        "The system then checks the soil condition again."
-    )
-
-    st.subheader("📟 LCD Display")
-
-    st.write(
-        "The 16×2 I²C LCD displays the pump status and soil sensor value "
-        "during operation."
-    )
-
-    st.success(
-        "The system is designed to water according to the crop's soil "
-        "condition instead of relying only on a fixed watering schedule."
-    )
-
-
-# ============================================================
-# 6. OUR CODE
-# ============================================================
-
-elif st.session_state.page == "code":
-
-    back_button()
-
-    st.title("🧑‍💻 Our Code")
-
-    st.write(
-        "Three main coding parts were used in our prototype."
-    )
-
-    # --------------------------------------------------------
-    # ARDUINO
-    # --------------------------------------------------------
-
-    st.subheader("🔌 1. Arduino Code")
-
-    st.markdown("""
-    The Arduino program handles:
-
-    - DHT11 temperature and humidity
-    - LDR light readings
-    - Soil moisture readings
-    - Relay control
-    - DC water pump control
-    - LCD display
-    - Serial communication with Python
-    """)
-
-    st.code("""
-Sensors
-   ↓
-Arduino Uno
-   ↓
-Read values
-   ↓
-Send data through USB Serial
-
-Arduino
-   ↓
-Relay
-   ↓
-DC Water Pump
-""", language="text")
-
-    # --------------------------------------------------------
-    # PYTHON
-    # --------------------------------------------------------
-
-    st.subheader("🐍 2. Python + Streamlit")
-
-    st.markdown("""
-    Python is used to:
-
-    - Receive Arduino sensor data
-    - Display sensor readings
-    - Analyse crop conditions
-    - Make irrigation decisions
-    - Communicate with the Google Sheets data system
-    """)
-
-    # --------------------------------------------------------
-    # AI
-    # --------------------------------------------------------
-
-    st.subheader("🤖 3. AI Disease Detection")
-
-    st.markdown("""
-    The AI application handles:
-
-    - Leaf image upload
-    - Loading the trained model
-    - Image prediction
-    - Confidence calculation
-    - 70% confidence threshold
-    - Displaying possible causes and suggested actions
-    """)
-
-    st.info(
-        "The disease model was trained using Google Teachable Machine."
-    )
-
-
-# ============================================================
-# 7. RECORDED DATA
-# ============================================================
-
-elif st.session_state.page == "data":
-
-    back_button()
-
-    st.title("📊 Recorded Data")
-
-    st.write(
-        "The sensor readings from our prototype are recorded in our "
-        "Google Sheet and can be viewed here."
-    )
-
-    # --------------------------------------------------------
-    # SENSOR DATA
-    # --------------------------------------------------------
-
-    st.subheader("📡 Sensor Data")
-
-    sensor_df = get_sensor_data()
-
-    if not sensor_df.empty:
+    if sensor_df is not None and not sensor_df.empty:
 
         st.dataframe(
             sensor_df,
@@ -639,23 +616,126 @@ elif st.session_state.page == "data":
             hide_index=True
         )
 
-    else:
-
-        st.warning(
-            "No sensor data could be loaded from the Google Sheet."
+        st.caption(
+            "These readings are retrieved from our Google Sheets data log."
         )
 
-    st.divider()
+    else:
 
-    # --------------------------------------------------------
-    # IRRIGATION LOG
-    # --------------------------------------------------------
+        st.info(
+            "The recorded sensor data could not be loaded at the moment. "
+            "The physical monitoring system can still be demonstrated directly."
+        )
 
-    st.subheader("🚰 Irrigation Log")
 
-    irrigation_df = get_irrigation_data()
+# ============================================================
+# 4. SMART IRRIGATION
+# ============================================================
 
-    if not irrigation_df.empty:
+elif page == "🚰 Smart Irrigation":
+
+    section_title(
+        "🚰 Smart Irrigation",
+        "Water is supplied only when the soil condition requires it."
+    )
+
+    st.markdown(
+        """
+        The soil moisture sensor tells us whether the soil is too dry,
+        suitable or too wet.
+
+        The system does **not** keep the pump running continuously.
+
+        Instead, it uses short irrigation cycles followed by a soaking
+        period and another measurement.
+        """
+    )
+
+    st.markdown("---")
+
+    st.subheader("🔄 Irrigation sequence")
+
+    show_flowchart(
+        IMG4,
+        "Smart irrigation workflow"
+    )
+
+    st.markdown(
+        """
+        ### Our actual irrigation logic
+
+        **1️⃣ Check the soil condition**
+
+        The normal irrigation decision is made at approximately
+        **5-minute intervals**.
+
+        **2️⃣ If the soil is suitable**
+
+        The pump remains OFF.
+
+        **3️⃣ If the soil is too wet**
+
+        The pump also remains OFF.
+
+        **4️⃣ If the soil is too dry**
+
+        The relay is activated and the pump runs for approximately
+        **1 second**.
+
+        **5️⃣ Pump OFF**
+
+        The system waits approximately **30 seconds**.
+
+        **6️⃣ Recheck**
+
+        The soil moisture is measured again.
+
+        **7️⃣ Repeat only if required**
+
+        If the soil is still too dry, another short watering cycle
+        can occur.
+        """
+    )
+
+    st.markdown("---")
+
+    st.subheader("🧑‍💻 How our code works")
+
+    st.markdown(
+        """
+        The basic decision chain is:
+
+        **Soil reading → Soil state → Irrigation decision → Relay → Pump → Wait → Recheck**
+
+        The Arduino also has a **1-second safety cutoff**.
+
+        This provides a hardware-level backup so that the pump cannot
+        remain ON indefinitely if something goes wrong with the control
+        process.
+        """
+    )
+
+    st.markdown(
+        """
+        <div class="judge-box">
+        <b>Why 1 second?</b><br><br>
+        For our prototype, the watering duration was chosen according to
+        the small pot size and the water flow of our pump and pipe.
+        The 30-second waiting period allows the water to spread through
+        the soil before the next measurement.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown("---")
+
+    st.subheader("📊 Recorded Irrigation Data")
+
+    irrigation_df = get_google_sheet_data("irrigation")
+    irrigation_df = normalise_columns(irrigation_df)
+
+    if irrigation_df is not None and not irrigation_df.empty:
 
         st.dataframe(
             irrigation_df,
@@ -663,80 +743,455 @@ elif st.session_state.page == "data":
             hide_index=True
         )
 
-    else:
-
-        st.warning(
-            "No irrigation data could be loaded from the Google Sheet."
+        st.caption(
+            "These events are retrieved from our irrigation log."
         )
 
-    st.caption(
-        "Data shown here comes from the Smart Agriculture data logging system."
+    else:
+
+        st.info(
+            "The irrigation log could not be loaded at the moment."
+        )
+
+
+# ============================================================
+# 5. AI PLANT DISEASE DETECTION
+# ============================================================
+
+elif page == "🍃 AI Plant Disease Detection":
+
+    section_title(
+        "🍃 AI Plant Disease Detection",
+        "Using image classification to identify visible leaf conditions."
+    )
+
+    st.markdown(
+        """
+        Environmental sensors can tell us about the surroundings of a
+        plant, but they cannot directly identify a visible disease on a leaf.
+
+        Therefore, we added a separate **AI-based image classification
+        system**.
+        """
+    )
+
+    st.markdown("---")
+
+    st.subheader("🔄 AI workflow")
+
+    show_flowchart(
+        IMG2,
+        "Plant disease detection workflow"
+    )
+
+    st.markdown("---")
+
+    st.subheader("🧠 How our AI system works")
+
+    st.markdown(
+        """
+        **1. Leaf image**
+
+        A leaf image is uploaded to the application.
+
+        **2. Image classification model**
+
+        Our trained Teachable Machine model receives the image.
+
+        **3. Prediction**
+
+        The model calculates probabilities for the trained classes.
+
+        **4. Highest probability**
+
+        The class with the highest probability is selected.
+
+        **5. Confidence threshold**
+
+        We use a **70% confidence threshold** for our prototype.
+
+        If the confidence is below this threshold, the result is treated
+        cautiously instead of being presented as a confident prediction.
+        """
+    )
+
+    st.markdown("---")
+
+    st.subheader("🍃 Classes in our current prototype")
+
+    classes = [
+        "Rose Healthy",
+        "Rose Powdery Mildew",
+        "Rose Spider Mite Damage",
+        "Brinjal Healthy",
+        "Brinjal Leaf Blight"
+    ]
+
+    cols = st.columns(5)
+
+    for index, class_name in enumerate(classes):
+
+        with cols[index]:
+            st.markdown(
+                f"""
+                <div class="metric-card">
+                    <div style="font-size:30px;">🍃</div>
+                    <div class="metric-label">
+                        <b>{class_name}</b>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    st.markdown("---")
+
+    st.subheader("🧪 Prototype test results")
+
+    test_results = pd.DataFrame(
+        {
+            "Class": [
+                "Brinjal Healthy",
+                "Brinjal Leaf Blight",
+                "Rose Healthy",
+                "Rose Powdery Mildew",
+                "Rose Spider Mite Damage"
+            ],
+            "Prototype Test Confidence": [
+                "98%",
+                "97%",
+                "93%",
+                "93%",
+                "95%"
+            ]
+        }
+    )
+
+    st.dataframe(
+        test_results,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.warning(
+        "These are prototype test results from our current trained model. "
+        "They should not be interpreted as validated field accuracy."
+    )
+
+    st.markdown("---")
+
+    st.subheader("🧑‍💻 Technology used")
+
+    st.markdown(
+        """
+        The main application is written in **Python using Streamlit**.
+
+        Inside the Streamlit application, we embedded **HTML and CSS**
+        for the interface and **JavaScript** to load and run the
+        Teachable Machine image-classification model using TensorFlow.js.
+
+        So, the Python application provides the main interface, while
+        the trained image model is executed in the browser.
+        """
     )
 
 
 # ============================================================
-# 8. OUR PROTOTYPE
+# 6. OUR PROTOTYPE
 # ============================================================
 
-elif st.session_state.page == "prototype":
+elif page == "🏗️ Our Prototype":
 
-    back_button()
-
-    st.title("🏗️ Our Prototype")
-
-    st.write(
-        "Our prototype combines environmental sensing, smart irrigation "
-        "and AI-based leaf analysis."
+    section_title(
+        "🏗️ Our Prototype",
+        "The hardware and software working together."
     )
 
-    st.image(
-        IMG5,
-        caption="Complete Smart Agriculture Prototype Architecture",
-        use_container_width=True
+    st.subheader("🔌 Hardware")
+
+    hardware = [
+        ("Arduino Uno", "Main microcontroller"),
+        ("DHT11", "Temperature and humidity"),
+        ("LDR", "Light sensing"),
+        ("Soil Moisture Sensor", "Soil moisture measurement"),
+        ("Relay Module", "Controls the pump electrically"),
+        ("Water Pump", "Supplies water"),
+        ("10 kΩ Resistors", "DHT11 pull-up and LDR voltage divider")
+    ]
+
+    hardware_df = pd.DataFrame(
+        hardware,
+        columns=["Component", "Purpose"]
     )
 
-    st.subheader("🔧 Hardware")
+    st.dataframe(
+        hardware_df,
+        use_container_width=True,
+        hide_index=True
+    )
 
-    st.markdown("""
-    - Arduino Uno
-    - DHT11 Temperature and Humidity Sensor
-    - Soil Moisture Sensor
-    - LDR Light Sensor
-    - Relay Module
-    - Small DC Water Pump
-    - 16×2 I²C LCD
-    - Breadboard and jumper wires
-    """)
+    st.markdown("---")
 
     st.subheader("💻 Software")
 
-    st.markdown("""
-    - Python
-    - Streamlit
-    - Arduino IDE
-    - Google Teachable Machine
-    """)
+    software = [
+        ("Arduino C++", "Reads sensors and controls relay"),
+        ("Python", "Receives and processes data"),
+        ("Streamlit", "Interactive dashboard"),
+        ("Google Sheets", "Data logging"),
+        ("Teachable Machine", "Image classification model"),
+        ("JavaScript + TensorFlow.js", "Runs the AI model in the browser")
+    ]
 
-    st.subheader("🌱 What our prototype demonstrates")
-
-    st.markdown("""
-    **Environmental Monitoring**
-
-    Measures temperature, humidity, soil moisture and light.
-
-    **Smart Irrigation**
-
-    Uses soil moisture and crop requirements to control watering.
-
-    **AI Disease Detection**
-
-    Analyses leaf images and classifies them into the five trained categories.
-    """)
-
-    st.divider()
-
-    st.write(
-        "In the future, these environmental measurements and AI leaf analysis "
-        "can be integrated for the same crop and field, with additional "
-        "measurements such as NPK and soil pH."
+    software_df = pd.DataFrame(
+        software,
+        columns=["Technology", "Role"]
     )
+
+    st.dataframe(
+        software_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.markdown("---")
+
+    st.subheader("🏗️ Complete prototype architecture")
+
+    show_flowchart(
+        IMG5,
+        "Complete hardware and software architecture"
+    )
+
+    st.markdown("---")
+
+    st.subheader("🔗 How everything connects")
+
+    st.markdown(
+        """
+        ### Physical side
+
+        **DHT11 + LDR + Soil Sensor**
+
+        ↓
+
+        **Arduino Uno**
+
+        ↓
+
+        **Relay**
+
+        ↓
+
+        **Water Pump**
+
+        ### Computer side
+
+        **Arduino**
+
+        ↓ USB Serial
+
+        **Python / Streamlit**
+
+        ↓
+
+        **Dashboard + Data Logging**
+
+        ### AI side
+
+        **Leaf Image**
+
+        ↓
+
+        **AI Image Classifier**
+
+        ↓
+
+        **Predicted Visible Condition**
+        """
+    )
+
+    st.markdown(
+        """
+        <div class="judge-box">
+        <b>Important design point:</b><br><br>
+        The Arduino handles the physical sensing and pump control.
+        The computer handles data display, analysis and logging.
+        The AI disease classifier is a separate image-based component.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+# ============================================================
+# 7. FUTURE VISION
+# ============================================================
+
+elif page == "🔮 Future Vision":
+
+    section_title(
+        "🔮 Future Vision",
+        "Moving from a school prototype towards an integrated precision-agriculture system."
+    )
+
+    st.markdown(
+        """
+        Our current project demonstrates separate technologies working
+        towards the same agricultural goal.
+
+        The next step would be to integrate them more closely for a
+        particular crop and field.
+        """
+    )
+
+    st.markdown("---")
+
+    st.subheader("🌱 1. More complete soil analysis")
+
+    st.markdown(
+        """
+        Future versions could include:
+
+        - Soil pH
+        - Nitrogen
+        - Phosphorus
+        - Potassium
+        - Better soil-moisture calibration
+        """
+    )
+
+    st.markdown("---")
+
+    st.subheader("🤖 2. Integrated AI + IoT")
+
+    st.markdown(
+        """
+        Instead of treating environmental monitoring and disease
+        detection as separate systems, a future version could combine:
+
+        **Environmental data + Soil data + Crop information + Leaf health**
+
+        to provide a more complete picture of crop condition.
+        """
+    )
+
+    st.markdown("---")
+
+    st.subheader("🌾 3. Intelligent crop planning")
+
+    st.markdown(
+        """
+        A future AI crop-planning system could consider:
+
+        - Current crop
+        - Previous crop
+        - Soil condition
+        - Water availability
+        - Environmental conditions
+        - Nutrient requirements
+        - Disease considerations
+
+        It could then suggest suitable candidate crops for the next
+        growing cycle.
+
+        Crop rotation could include suitable leguminous crops such as
+        green gram, black gram or cowpea, depending on the actual
+        agricultural conditions and crop plan.
+        """
+    )
+
+    st.markdown("---")
+
+    st.subheader("📱 4. Farmer-friendly interface")
+
+    st.markdown(
+        """
+        The technology should not require farmers to understand raw
+        sensor values.
+
+        A future mobile or web application could convert complex data
+        into simple information such as:
+
+        **💧 Water required**
+
+        **🌡️ Temperature too high**
+
+        **☀️ Light suitable**
+
+        **🍃 Possible leaf condition detected**
+
+        **🌱 Crop suitability needs attention**
+        """
+    )
+
+    st.markdown("---")
+
+    st.subheader("💼 5. Possible future service model")
+
+    st.markdown(
+        """
+        A future version could be developed as a hardware-and-software
+        service.
+
+        A farmer could use a low-cost sensor unit connected to a mobile
+        or web application.
+
+        Different versions could potentially be developed for:
+
+        - Small farms
+        - Larger farms
+        - Greenhouses
+        - Different crops
+        - Different levels of monitoring
+
+        The goal would be to make precision-agriculture tools more
+        accessible and easier to use.
+        """
+    )
+
+    st.markdown("---")
+
+    st.markdown(
+        """
+        <div class="future-box">
+
+        <h3>🌍 Our long-term idea</h3>
+
+        The aim is not simply to automate a pump or classify a leaf.
+
+        Our larger vision is to use <b>AI, IoT and data-driven
+        technology</b> to support agriculture that is more precise,
+        efficient and sustainable.
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown("---")
+
+    st.success(
+        "🌱 From measuring the field → understanding the data → "
+        "taking action → learning from the results."
+    )
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.markdown("---")
+
+st.markdown(
+    """
+    <div style="text-align:center;color:#777;padding:15px;">
+
+    <b>AI + IoT Based Precision Agriculture</b><br>
+
+    Science • Technology • Innovation • Sustainable Agriculture
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
