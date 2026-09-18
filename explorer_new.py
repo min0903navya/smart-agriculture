@@ -32,7 +32,7 @@ IMG5 = "https://raw.githubusercontent.com/min0903navya/smart-agriculture/main/5.
 # THAT YOU ALREADY USED IN YOUR WORKING APP.
 # ============================================================
 
-GOOGLE_SHEET_URL = "PASTE_YOUR_EXISTING_GOOGLE_APPS_SCRIPT_URL_HERE"
+GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxahGoaxdj2J_3M2lyy_UPOdfJTaBNXsF0NW8FReMvuOR-mQg23flpPiMXKwgqIAjWiJw/exec"
 
 
 # ============================================================
