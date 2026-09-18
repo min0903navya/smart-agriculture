@@ -18,11 +18,11 @@ st.set_page_config(
 # IMAGE PATHS
 # ============================================================
 
-IMG1 = r"D:\NAVYA S\1.CLASS 12\science project\agritech\flowchart\1.jpg"
-IMG2 = r"D:\NAVYA S\1.CLASS 12\science project\agritech\flowchart\2.jpg"
-IMG3 = r"D:\NAVYA S\1.CLASS 12\science project\agritech\flowchart\3.jpg"
-IMG4 = r"D:\NAVYA S\1.CLASS 12\science project\agritech\flowchart\4.jpg"
-IMG5 = r"D:\NAVYA S\1.CLASS 12\science project\agritech\flowchart\5.jpg"
+IMG1 = "https://raw.githubusercontent.com/min0903navya/smart-agriculture/main/1.jpg"
+IMG2 = "https://raw.githubusercontent.com/min0903navya/smart-agriculture/main/2.jpg"
+IMG3 = "https://raw.githubusercontent.com/min0903navya/smart-agriculture/main/3.jpg"
+IMG4 = "https://raw.githubusercontent.com/min0903navya/smart-agriculture/main/4.jpg"
+IMG5 = "https://raw.githubusercontent.com/min0903navya/smart-agriculture/main/5.jpg"
 
 
 # ============================================================
